@@ -1,0 +1,134 @@
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <ctime>
+#include <string>
+#include <map>
+
+using namespace std;
+
+// Global variables for thresholds
+int LOW_WATER_THRESHOLD;
+int NORMAL_WATER_THRESHOLD;
+int HIGH_WATER_THRESHOLD;
+int MAX_WATER_LEVEL;
+
+// Actuator states
+bool irrigationSystemOn = false;
+
+// Enum to define water states
+enum WaterState {
+    LOW,
+    NORMAL,
+    HIGH
+};
+
+// Function to simulate water level sensor readings
+int readWaterLevel() {
+    return rand() % (MAX_WATER_LEVEL + 1);  // Simulated water level between 0 and MAX_WATER_LEVEL
+}
+
+// Function to determine the water state based on the water level
+WaterState getWaterState(int waterLevel) {
+    if (waterLevel < LOW_WATER_THRESHOLD) {
+        return LOW;
+    } else if (waterLevel < NORMAL_WATER_THRESHOLD) {
+        return NORMAL;
+    } else {
+        return HIGH;
+    }
+}
+
+// Function to control the irrigation system based on the water state
+void controlIrrigationSystem(int waterLevel) {
+    WaterState state = getWaterState(waterLevel);
+
+    switch (state) {
+        case LOW:
+            if (!irrigationSystemOn) {
+                irrigationSystemOn = true;
+                cout << "ALERT: Water level is low (" << waterLevel << " cm). Activating irrigation system.\n";
+            }
+            break;
+        case NORMAL:
+            if (irrigationSystemOn) {
+                irrigationSystemOn = false;
+                cout << "Water level is normal (" << waterLevel << " cm). Irrigation system OFF.\n";
+            }
+            break;
+        case HIGH:
+            if (irrigationSystemOn) {
+                irrigationSystemOn = false;
+                cout << "Water level is high (" << waterLevel << " cm). Irrigation system OFF.\n";
+            }
+            break;
+    }
+}
+
+// Function to log data
+void logData(const string& country, int waterLevel, WaterState state) {
+    ofstream logFile("water_level_log.txt", ios_base::app);
+    if (logFile.is_open()) {
+        string stateStr;
+        switch (state) {
+            case LOW: stateStr = "LOW"; break;
+            case NORMAL: stateStr = "NORMAL"; break;
+            case HIGH: stateStr = "HIGH"; break;
+        }
+        logFile << "Country: " << country << ", Water Level: " << waterLevel << " cm, State: " << stateStr << "\n";
+        logFile.close();
+    } else {
+        cerr << "Error opening log file.\n";
+    }
+}
+
+int main() {
+    // Seed for random number generation
+    srand(static_cast<unsigned int>(time(0)));  
+
+    // User input for thresholds
+    cout << "Enter low water level threshold: ";
+    cin >> LOW_WATER_THRESHOLD;
+    cout << "Enter normal water level threshold: ";
+    cin >> NORMAL_WATER_THRESHOLD;
+    cout << "Enter high water level threshold: ";
+    cin >> HIGH_WATER_THRESHOLD;
+    cout << "Enter max water level: ";
+    cin >> MAX_WATER_LEVEL;
+
+    // Map to store countries and their water levels
+    map<string, int> countries;
+
+    // Number of countries to input
+    int numCountries;
+    cout << "Enter number of countries: ";
+    cin >> numCountries;
+
+    // Input countries and simulate water level readings for each
+    for (int i = 0; i < numCountries; ++i) {
+        string country;
+        cout << "Enter country name: ";
+        cin >> country;
+
+        // Simulate reading the water level for this country
+        int waterLevel = readWaterLevel();
+        cout << "Country: " << country << ", Current water level: " << waterLevel << " cm\n";
+
+        // Control the irrigation system based on the water level
+        controlIrrigationSystem(waterLevel);
+
+        // Determine the water state
+        WaterState state = getWaterState(waterLevel);
+
+        // Log the water level data
+        logData(country, waterLevel, state);
+
+        // Simulate time passing (optional message to indicate progress)
+        cout << "Data logged for " << country << ".\n";
+    }
+
+    cout << "End of water level measurement simulation.\n";
+
+    return 0;
+}
+
